@@ -8,7 +8,7 @@ from triangulator import process_dataset
 # you can change these here if needed, without using CLI options.
 DEFAULT_ANNOTATIONS = 'hpe_04.coco/train/_annotations.coco.json'
 DEFAULT_CALIB_ROOT = 'material4project-20260603T095832Z-3-001/material4project/3D Pose Estimation Material/camera_data_with_Rvecs/camera_data'
-DEFAULT_OUTPUT = 'project/triangulation_results.json'
+DEFAULT_OUTPUT = 'project/output/triangulation_results.json'
 
 
 def main() -> None:
