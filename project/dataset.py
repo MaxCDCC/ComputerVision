@@ -30,6 +30,25 @@ def camera_view_from_filename(filename: str) -> Optional[str]:
     return filename.split('_frame_')[0]
 
 
+def get_image_sizes_by_view(data: dict) -> Dict[str, Tuple[int, int]]:
+    # Read the (width, height) of one image per camera view from the COCO file.
+    # This is needed by cv2.calibrateCamera, which requires the image size to
+    # build a sensible initial guess for the principal point (image center).
+    sizes: Dict[str, Tuple[int, int]] = {}
+
+    for img in data['images']:
+        view = camera_view_from_filename(img['file_name'])
+        if view is None or view in sizes:
+            continue
+
+        width = img.get('width')
+        height = img.get('height')
+        if width and height:
+            sizes[view] = (int(width), int(height))
+
+    return sizes
+
+
 def group_annotations_by_frame(image_info: Dict[int, dict], ann_by_image: Dict[int, List[dict]]) -> Dict[int, Dict[int, List[Tuple[str, dict]]]]:
     # group annotations by frame and by player category
     # grouped[frame][player] = [(view, annotation), ...]

@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -29,7 +29,7 @@ class CameraModel:
 
 
 def load_calibration(calib_path: str) -> CameraModel:
-    # read calibration parameters from a JSON file
+    # Read calibration parameters from a JSON file
     with open(calib_path, 'r') as f:
         calib = json.load(f)
 
@@ -48,14 +48,46 @@ def load_calibration(calib_path: str) -> CameraModel:
 
 
 def find_calibration_file(calib_root: str, cam_name: str) -> Optional[str]:
-    # try the standard file first, otherwise use the fallback file
-    preferred = os.path.join(calib_root, cam_name, 'calib', 'camera_calib.json')
-    fallback = os.path.join(calib_root, cam_name, 'calib', 'camera_calib_real.json')
-    if os.path.exists(preferred):
-        return preferred
-    if os.path.exists(fallback):
-        return fallback
+    # Try the refined calibration first, then standard files
+    calib_dir = os.path.join(calib_root, cam_name, 'calib')
+    
+    # Priority order: refined -> standard -> fallback
+    files_to_try = [
+        os.path.join(calib_dir, 'camera_calib_refined.json'),
+        os.path.join(calib_dir, 'camera_calib.json'),
+        os.path.join(calib_dir, 'camera_calib_real.json'),
+    ]
+    
+    for calib_file in files_to_try:
+        if os.path.exists(calib_file):
+            return calib_file
     return None
+
+
+def find_court_points_file(calib_root: str, cam_name: str) -> Optional[str]:
+    # Locate the "img_points.json" file for one camera: it stores the known
+    # 3D positions of the court corners (real_corners) and where they fall
+    # in that camera's image (img_corners). These are GROUND TRUTH
+    # correspondences (independent of any triangulation), so they are the
+    # correct reference to use for Bundle Adjustment (Task 3).
+    calib_dir = os.path.join(calib_root, cam_name, 'calib')
+    court_file = os.path.join(calib_dir, 'img_points.json')
+
+    if os.path.exists(court_file):
+        return court_file
+    return None
+
+
+def load_court_points(court_points_path: str) -> Tuple[np.ndarray, np.ndarray]:
+    # Read the court correspondences for one camera.
+    # real_corners: known 3D world position of each court marking (x, y, z)
+    # img_corners: where that same marking was clicked/annotated in the image (u, v)
+    with open(court_points_path, 'r') as f:
+        data = json.load(f)
+
+    real_corners = np.array(data['real_corners'], dtype=np.float64)
+    img_corners = np.array(data['img_corners'], dtype=np.float64)
+    return real_corners, img_corners
 
 
 def load_camera_models(calib_root: str) -> Dict[str, CameraModel]:
@@ -72,7 +104,6 @@ def load_camera_models(calib_root: str) -> Dict[str, CameraModel]:
 
 def undistort_uv(camera: CameraModel, uv: np.ndarray) -> np.ndarray:
     # Remove lens distortion from a 2D image point
-
     # The input point comes from the original image
     # The returned point corresponds to its corrected position
     uv = uv.reshape(1, 1, 2).astype(np.float64)

@@ -1,0 +1,18 @@
+{
+  "original": {
+    "frames_processed": 5,
+    "triangulated_skeletons": 50,
+    "points_triangulated": 878,
+    "mean_reprojection_error_px": 181.3475380205652
+  },
+  "refined": {
+    "frames_processed": 5,
+    "triangulated_skeletons": 50,
+    "points_triangulated": 878,
+    "mean_reprojection_error_px": 135.89347136581435
+  },
+  "improvement": {
+    "absolute_px": 45.45406665475085,
+    "relative_pct": 25.064617447189306
+  }
+}
